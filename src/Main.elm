@@ -2,16 +2,18 @@ module Main exposing (main)
 
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta)
-import Browser.Navigation exposing (Key)
+import Browser.Navigation exposing (Key, pushUrl, load)
 import Routing exposing (Route)
 import Random exposing (generate)
 import Url
 import Html
--- import GejmOfLajf as GejmOfLajf
+import GameOfLife as GOL
 
 type alias Model =
   { navKey : Key
   , route : Route
+  , clock : Int
+  , gol : GOL.Model
   }
 
 type Msg
@@ -19,6 +21,7 @@ type Msg
     | RequestedUrl Browser.UrlRequest
     | Animate Float
     | RandomGen (List ( Int, Int ))
+    | Gol GOL.Msg
 
 
 subscriptions : Model -> Sub Msg
@@ -44,6 +47,8 @@ init _ location key =
   in
   ( { navKey = key
     , route = route
+    , clock = 0
+    , gol = GOL.init []
     }
   , Cmd.none -- generate RandomGen (GejmOfLajf.randomBrojevi GejmOfLajf.defaultBoardSize)
   )
@@ -51,14 +56,50 @@ init _ location key =
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-  ( model, Cmd.none )
+  case msg of
+    UrlUpdate location ->
+      let
+        route = Routing.routeLocation location
+      in
+        ( { model | route = route }, Cmd.none )
+
+    RequestedUrl urlReq ->
+      case urlReq of
+        Browser.Internal url ->
+          ( model, pushUrl model.navKey (Url.toString url) )
+
+        Browser.External href ->
+          ( model, load href )
+    Animate diff ->
+      ( { model
+        | clock = model.clock
+        , gol = GOL.tick diff model.gol
+        }
+      , Cmd.none
+      )
+
+    Gol golMsg ->
+      let
+        modCmd =
+            GOL.update golMsg model.gol
+      in
+        ( { model
+          | gol = Tuple.first modCmd
+          }
+        , Cmd.map (\gm -> Gol gm) (Tuple.second modCmd)
+        )
+
+    RandomGen zivi ->
+      ( { model
+        | gol = GOL.init zivi
+        }
+      , Cmd.none
+      )
 
 view : Model -> Browser.Document Msg
 view model =
   Browser.Document
     "Game of Elm"
-    [ Html.div []
-      [ Html.text "wat"
-      ]
+    [ Html.map (\m -> Gol m) (GOL.view model.gol)
     ]
 

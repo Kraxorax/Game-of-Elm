@@ -1,4 +1,4 @@
-module Pages.GejmOfLajf exposing (Celija(..), Model, Msg(..), Tabla, boardPxWH, celToEle, celToString, cellSize, defaultBoardSize, defaultRefreshTime, enlarge, flyer, init, isZiva, istocifra, matrixToBoard, modulo, novoStanje, numbOfZive, ozivi, randomBrojevi, step, survival, tick, toggleCell, topologyToString, trimList, update, view)
+module GameOfLife exposing (Celija(..), Model, Msg(..), Tabla, boardPxWH, celToEle, celToString, cellSize, defaultBoardSize, defaultRefreshTime, enlarge, flyer, init, isZiva, istocifra, matrixToBoard, modulo, novoStanje, numbOfZive, ozivi, randomBrojevi, step, survival, tick, toggleCell, topologyToString, trimList, update, view)
 
 import Array
 import Html exposing (..)
