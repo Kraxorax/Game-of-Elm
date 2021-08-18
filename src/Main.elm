@@ -50,7 +50,7 @@ init _ location key =
     , clock = 0
     , gol = GOL.init []
     }
-  , Cmd.none -- generate RandomGen (GejmOfLajf.randomBrojevi GejmOfLajf.defaultBoardSize)
+  , generate RandomGen (GOL.randomBrojevi GOL.defaultBoardSize)
   )
 
 

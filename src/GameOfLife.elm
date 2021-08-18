@@ -1,4 +1,4 @@
-module GameOfLife exposing (Celija(..), Model, Msg(..), Tabla, boardPxWH, celToEle, celToString, cellSize, defaultBoardSize, defaultRefreshTime, enlarge, flyer, init, isZiva, istocifra, matrixToBoard, modulo, novoStanje, numbOfZive, ozivi, randomBrojevi, step, survival, tick, toggleCell, topologyToString, trimList, update, view)
+module GameOfLife exposing (Cell(..), Model, Msg(..), Board, boardPxWH, celToEle, celToString, cellSize, defaultBoardSize, defaultRefreshTime, enlarge, flyer, init, isAlive, istocifra, matrixToBoard, modulo, novoStanje, numbOfZive, ozivi, randomBrojevi, step, survival, tick, toggleCell, topologyToString, trimList, update, view)
 
 import Array
 import Html exposing (..)
@@ -10,8 +10,7 @@ import Random exposing (Generator, generate, int, list, pair)
 
 
 defaultBoardSize : Int
-defaultBoardSize =
-    60
+defaultBoardSize = 60
 
 
 boardPxWH : Float
@@ -24,9 +23,9 @@ defaultRefreshTime =
     30
 
 
-type Celija
-    = Ziva
-    | Mrtva
+type Cell
+    = Alive
+    | Dead
 
 
 type Msg
@@ -36,18 +35,18 @@ type Msg
     | Recreate (List ( Int, Int ))
     | Zoom Int
     | KillAll
-    | Klik ( Int, Int ) Celija
+    | Klik ( Int, Int ) Cell
     | Step
     | Accelerate Float
     | ChangeTopology MatrixTopology
 
 
-type alias Tabla =
-    Matrix Celija
+type alias Board =
+    Matrix Cell
 
 
 type alias Model =
-    { matrica : Tabla
+    { matrica : Board
     , boardSize : Int
     , clock : Int
     , counter : Int
@@ -81,20 +80,20 @@ init zivi =
         Torus
 
 
-ozivi : List ( Int, Int ) -> Int -> Matrix Celija
+ozivi : List ( Int, Int ) -> Int -> Matrix Cell
 ozivi zivi boardSize =
-    repeat boardSize boardSize Mrtva
+    repeat boardSize boardSize Dead
         |> indexedMap
             (\x y _ ->
                 if List.member ( x, y ) zivi then
-                    Ziva
+                    Alive
 
                 else
-                    Mrtva
+                    Dead
             )
 
 
-resize : Tabla -> Int -> Tabla
+resize : Board -> Int -> Board
 resize t d =
     if d > 0 then
         enlarge t d
@@ -106,11 +105,11 @@ resize t d =
         t
 
 
-enlarge : Tabla -> Int -> Tabla
+enlarge : Board -> Int -> Board
 enlarge t d =
     let
         hsides =
-            repeat d (Matrix.height t) Mrtva
+            repeat d (Matrix.height t) Dead
 
         nt =
             Result.withDefault t
@@ -121,7 +120,7 @@ enlarge t d =
                 (concatHorizontal nt hsides)
 
         vsides =
-            repeat (Matrix.width nt1) d Mrtva
+            repeat (Matrix.width nt1) d Dead
 
         nt2 =
             Result.withDefault t
@@ -134,7 +133,7 @@ enlarge t d =
     nt3
 
 
-ensmallen : Tabla -> Int -> Tabla
+ensmallen : Board -> Int -> Board
 ensmallen t delta =
     let
         d =
@@ -147,7 +146,7 @@ ensmallen t delta =
             ts - 2 * d
 
         sm =
-            Matrix.generate r r (\x y -> Matrix.get (x + d) (y + d) t |> Result.withDefault Mrtva)
+            Matrix.generate r r (\x y -> Matrix.get (x + d) (y + d) t |> Result.withDefault Dead)
     in
     sm
 
@@ -159,7 +158,7 @@ trimList d l =
 
 numbOfZive : Int -> Int -> Model -> Int
 numbOfZive x y m =
-    neighbours m.topology x y m.matrica |> Array.toList |> List.filter isZiva |> List.length
+    neighbours m.topology x y m.matrica |> Array.toList |> List.filter isAlive |> List.length
 
 
 modulo : Int -> Int -> Int
@@ -174,7 +173,7 @@ modulo a m =
         a
 
 
-novoStanje : Model -> Tabla
+novoStanje : Model -> Board
 novoStanje m =
     m.matrica
         |> indexedMap
@@ -187,39 +186,39 @@ novoStanje m =
             )
 
 
-survival : Int -> Celija -> Celija
-survival komsije celija =
+survival : Int -> Cell -> Cell
+survival komsije cell =
     if komsije < 2 then
-        Mrtva
+        Dead
 
     else if komsije == 2 then
-        celija
+        cell
 
     else if komsije == 3 then
-        Ziva
+        Alive
 
     else
-        Mrtva
+        Dead
 
 
-isZiva : Celija -> Bool
-isZiva c =
+isAlive : Cell -> Bool
+isAlive c =
     case c of
-        Ziva ->
+        Alive ->
             True
 
-        Mrtva ->
+        Dead ->
             False
 
 
-toggleCell : Celija -> Celija
+toggleCell : Cell -> Cell
 toggleCell c =
     case c of
-        Ziva ->
-            Mrtva
+        Alive ->
+            Dead
 
-        Mrtva ->
-            Ziva
+        Dead ->
+            Alive
 
 
 tick : Float -> Model -> Model
@@ -320,7 +319,7 @@ update msg model =
 
         KillAll ->
             ( { model
-                | matrica = repeat model.boardSize model.boardSize Mrtva
+                | matrica = repeat model.boardSize model.boardSize Dead
               }
             , Cmd.none
             )
@@ -345,22 +344,22 @@ update msg model =
             )
 
 
-celToString : Celija -> String
+celToString : Cell -> String
 celToString cel =
     case cel of
-        Mrtva ->
-            "Mrtva"
+        Dead ->
+            "Dead"
 
-        Ziva ->
-            "Ziva"
+        Alive ->
+            "Alive"
 
 
-celToEle : Celija -> ( Int, Int ) -> List (Html.Attribute Msg) -> Html Msg
+celToEle : Cell -> ( Int, Int ) -> List (Html.Attribute Msg) -> Html Msg
 celToEle c ( x, y ) pos =
     let
         attrs =
             List.append
-                [ class (celToString c ++ " celija")
+                [ class (celToString c ++ " Cell")
                 , onClick (Klik ( x, y ) c)
                 ]
                 pos
@@ -374,7 +373,7 @@ cellSize boardSize =
     boardPxWH / toFloat boardSize
 
 
-matrixToBoard : Int -> Int -> Int -> Celija -> Html Msg
+matrixToBoard : Int -> Int -> Int -> Cell -> Html Msg
 matrixToBoard boardSize x y c =
     let
         x_ =
@@ -385,10 +384,10 @@ matrixToBoard boardSize x y c =
 
         bgColor =
             case c of
-                Ziva ->
+                Alive ->
                     "lawngreen"
 
-                Mrtva ->
+                Dead ->
                     "rgb(160, 160, 160)"
 
         cellStyle =
