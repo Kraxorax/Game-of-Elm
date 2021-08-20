@@ -1,17 +1,18 @@
-module GameOfLife exposing (defaultBoardSize, init, randomBrojevi,
-    tick, update)
+module GameOfLife exposing (Model, Msg, view
+    , defaultBoardSize, init, randomBrojevi
+    , tick, update)
 
 import Array
-import Html exposing (..)
-import Html.Attributes exposing (class, style)
-import Html.Events exposing (onClick)
 import Matrix exposing (Matrix, concatHorizontal, concatVertical, generate, indexedMap, repeat)
 import Neighbours exposing (MatrixTopology(..), neighbours)
 import Random exposing (Generator, generate, int, list, pair)
-import GameOfLife.View exposing (view)
-import GameOfLife.Model exposing (Model, Board, Cell(..))
-import GameOfLife.Msg exposing (Msg(..))
+import GameOfLife.View as GOLView exposing (view)
+import GameOfLife.Model as GOLModel exposing (Model, Board, Cell(..))
+import GameOfLife.Msg as GOLMsg exposing (Msg(..))
 
+type alias Model = GOLModel.Model
+type alias Msg = GOLMsg.Msg
+view = GOLView.view
 
 defaultBoardSize : Int
 defaultBoardSize = 60
@@ -309,13 +310,7 @@ update msg model =
             )
 
 
-
-
-
-
 randomBrojevi : Int -> Generator (List ( Int, Int ))
 randomBrojevi boardSize =
     list ((toFloat boardSize ^ 2 / 4) |> floor) <|
         pair (int 0 boardSize) (int 0 boardSize)
-
-

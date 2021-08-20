@@ -15,8 +15,6 @@ boardPxWH =
     700
 
 
-
-
 celToEle : Cell -> ( Int, Int ) -> List (Html.Attribute Msg) -> Html Msg
 celToEle c ( x, y ) pos =
     let
