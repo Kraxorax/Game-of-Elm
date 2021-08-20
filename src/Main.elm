@@ -8,12 +8,15 @@ import Random exposing (generate)
 import Url
 import Html
 import GameOfLife as GOL
+import GameOfLife.Model as GOLModel
+import GameOfLife.Msg as GOLMsg
+import GameOfLife.View as GOLView
 
 type alias Model =
   { navKey : Key
   , route : Route
   , clock : Int
-  , gol : GOL.Model
+  , gol : GOLModel.Model
   }
 
 type Msg
@@ -21,7 +24,7 @@ type Msg
     | RequestedUrl Browser.UrlRequest
     | Animate Float
     | RandomGen (List ( Int, Int ))
-    | Gol GOL.Msg
+    | Gol GOLMsg.Msg
 
 
 subscriptions : Model -> Sub Msg
@@ -100,6 +103,6 @@ view : Model -> Browser.Document Msg
 view model =
   Browser.Document
     "Game of Elm"
-    [ Html.map (\m -> Gol m) (GOL.view model.gol)
+    [ Html.map (\m -> Gol m) (GOLView.view model.gol)
     ]
 
