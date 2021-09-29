@@ -1,13 +1,19 @@
 module GameOfLife.View exposing (view)
 
-import Html exposing (..)
+import Html exposing (Html, div)
 import Html.Attributes exposing (class, style)
 import Html.Events exposing (onClick)
+import Element exposing 
+    (Element, spaceEvenly, fill, rgba, html, el, text, row, column, padding, layout, spacing, width)
+import Element.Font as Font exposing (center)
+import Element.Border as Border
+import Element.Input exposing (button)
 import Array exposing (toList)
 import Matrix exposing (indexedMap, toArray)
 import Neighbours exposing (MatrixTopology(..))
 import GameOfLife.Model exposing (Model, Cell(..))
 import GameOfLife.Msg exposing (Msg(..))
+import Element.Background exposing (color)
 
 
 boardPxWH : Float
@@ -39,7 +45,6 @@ celToString cel =
             "Alive"
 
 
-
 cellSize : Int -> Float
 cellSize boardSize =
     boardPxWH / toFloat boardSize
@@ -68,7 +73,6 @@ topologyToString mt =
 
         StripVertical ->
             "Vertical Strip"
-
 
 
 matrixToBoard : Int -> Int -> Int -> Cell -> Html Msg
@@ -109,80 +113,93 @@ view model =
             , style "width" "700px"
             , style "height" "700px"
             ]
-    in
-    div []
-        [ div boardStyle
-            (indexedMap
-                (matrixToBoard model.boardSize)
-                model.board
-                |> Matrix.toArray
-                |> Array.toList
-            )
-        , table []
-            [ tr []
-                [ td []
-                    [ text
-                        ("gen: "
-                            ++ String.fromInt model.genNumb
-                            ++ ":"
-                            ++ istocifra (String.fromInt model.counter) model.refreshTime
-                            ++ "/"
-                            ++ String.fromFloat model.refreshTime
-                        )
-                    ]
-                , td [] []
-                , td []
-                    [ text ("size: " ++ String.fromInt model.boardSize ++ " ^2")
-                    ]
-                , td [] [ text (topologyToString model.topology) ]
-                ]
-            , tr []
-                [ td []
-                    [ button [ onClick ToggleRunning ]
-                        [ text
-                            (if not model.running then
-                                "START"
-
-                             else
-                                "STOP"
-                            )
-                        ]
-                    ]
-                , td []
-                    [ button [ onClick Step ] [ text "Step" ]
-                    ]
-                , td []
-                    [ button [ onClick (Zoom 1) ] [ text "Zoom Out" ]
-                    ]
-                , td []
-                    [ button [ onClick (ChangeTopology Torus) ] [ text "Torus" ]
-                    ]
-                , td []
-                    [ button [ onClick (ChangeTopology Plane) ] [ text "Plane" ]
-                    ]
-                ]
-            , tr []
-                [ td []
-                    [ button [ onClick KillAll ] [ text "KILL ALL" ]
-                    ]
-                , td []
-                    [ button [ onClick (Accelerate -150) ] [ text "Spd +" ]
-                    , button [ onClick (Accelerate 150) ] [ text "Spd -" ]
-                    ]
-                , td []
-                    [ button [ onClick (Zoom -1) ] [ text "Zoom In" ]
-                    ]
-                , td []
-                    [ button [ onClick (ChangeTopology StripVertical) ] [ text "Vertical Strip" ]
-                    ]
-                , td []
-                    [ button [ onClick (ChangeTopology StripHorizontal) ] [ text "Horizontal Strip" ]
-                    ]
-                ]
-            , tr []
-                [ td []
-                    [ button [ onClick Reseed ] [ text "RESEED" ]
-                    ]
-                ]
+        
+        board = column [ padding 5 ] 
+            [ html 
+                ( div boardStyle 
+                    ( indexedMap (matrixToBoard model.boardSize) model.board
+                        |> Matrix.toArray
+                        |> Array.toList
+                    )
+                )
             ]
-        ]
+
+        bigColumnStyle = 
+            [ padding 20
+            , spacing 10
+            , width fill
+            , Font.family 
+                [ Font.typeface "Monotype"
+                , Font.sansSerif
+                ]
+            , Border.rounded 5
+            , Border.shadow { offset = (2, 2)
+                            , size = 2
+                            , blur = 4
+                            , color = rgba 0 0 0 0.2
+                            }
+            ]
+
+        generationAndTime = 
+            ( String.fromInt model.genNumb ) ++ " / "
+            ++ ( istocifra (String.fromInt model.counter) model.refreshTime) 
+
+        stats = column bigColumnStyle
+            [ text "Generation / time:"
+            , text generationAndTime
+            , text ("size: " ++ String.fromInt model.boardSize ++ " ^2")
+            , text ("Topology: " ++ (topologyToString model.topology))
+            ]
+
+        startStopBttnLabel = if not model.running then "START" else "STOP"
+
+        bigBttnStyle = 
+            [ padding 4
+            , Border.rounded 2
+            , Border.shadow { offset = (1, 1)
+                            , size = 1
+                            , blur = 2
+                            , color = rgba 0 0 0 0.1
+                            }
+            , width fill
+            , center
+            , color (rgba 255 255 255 255)
+            , Element.mouseOver 
+                [ color (rgba 0.9 0.9 0.9 0.2) ]
+            ]
+
+        mainControl = column [ width fill, spacing 5 ]
+            [ button bigBttnStyle { onPress = Just ToggleRunning, label = text startStopBttnLabel }
+            , button bigBttnStyle { onPress = Just KillAll, label = text "Kill all" } 
+            , button bigBttnStyle { onPress = Just Reseed, label = text "Reseed" }
+            ]
+
+        secondaryControl = column [ width fill, spacing 5 ]
+            [ button bigBttnStyle { onPress = Just Step, label = text "Step" }
+            , button bigBttnStyle { onPress = Just (Zoom 1), label = text "Zoom out" } 
+            , button bigBttnStyle { onPress = Just (Zoom -1), label = text "Zoom in" }
+            , button bigBttnStyle { onPress = Just (Accelerate -150), label = text "Accelerate" }
+            , button bigBttnStyle { onPress = Just (Accelerate 150), label = text "Decelerate" }
+            ]
+
+        topologies = column [ width fill, spacing 5 ]
+            [ button bigBttnStyle { onPress = Just (ChangeTopology Torus), label = text "Torus" }
+            , button bigBttnStyle { onPress = Just (ChangeTopology Plane), label = text "Plane" }
+            , button bigBttnStyle { onPress = Just (ChangeTopology StripVertical), label = text "Vertical Strip" }
+            , button bigBttnStyle { onPress = Just (ChangeTopology StripHorizontal), label = text "Horizontal Strip" }
+            ]
+
+        controlColumn = column bigColumnStyle
+            [ row [ width fill ] [mainControl]
+            , row [ width fill ] [secondaryControl]
+            , row [ width fill ] [topologies]
+            ]
+
+    in
+    layout [ padding 10]
+        (row [ spaceEvenly, width fill ]
+            [ stats
+            , board
+            , controlColumn
+            ]
+        )

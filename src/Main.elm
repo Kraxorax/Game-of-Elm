@@ -3,8 +3,8 @@ module Main exposing (main)
 import Browser
 import Browser.Events exposing (onAnimationFrameDelta)
 import Browser.Navigation exposing (Key, pushUrl, load)
-import Routing exposing (Route)
 import Random exposing (generate)
+import Routing exposing (Route)
 import Url
 import Html
 import GameOfLife as GOL
